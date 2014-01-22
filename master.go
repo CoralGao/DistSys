@@ -5,7 +5,7 @@
 // Binds PUSH socket to tcp://localhost:5557
 // Sends batch of tasks to workers via that socket
 //
-package master
+package DistSys
 
 import (
         "fmt"
@@ -19,11 +19,11 @@ import (
 
 var Debug bool
 
-type Interface interface {
+type Interfacemaster interface {
         Analyze(pattern []byte)
 }
 
-func Start(data Interface) {
+func Startmaster(data Interfacemaster) {
 
         // ventilator
         var queries_file = flag.String("q", "", "queries file")

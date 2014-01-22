@@ -1,4 +1,4 @@
-package workers
+package DistSys
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 	"strconv"
 )
 
-type Interface interface {
+type Interfaceworkers interface {
 	Analyze(pattern []byte) []int
 }
 
-func Start(data Interface) {
+func Startworkers(data Interfaceworkers) {
 
 	context, _ := zmq.NewContext()
 	defer context.Close()
