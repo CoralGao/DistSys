@@ -10,7 +10,7 @@ package DistSys
 import (
         "fmt"
         zmq "github.com/alecthomas/gozmq"
-        "time"
+        // "time"
         "flag"
         "os"
         "bufio"
@@ -20,7 +20,7 @@ import (
 var Debug bool
 
 type Interfacemaster interface {
-        Analyze(pattern []byte)
+        AnalyzeResult(pattern []byte)
 }
 
 func Startmaster(data Interfacemaster) {
@@ -70,7 +70,7 @@ func Startmaster(data Interfacemaster) {
                                         msg := line
                                         fmt.Printf("Sending %s\n", msg)
                                         sender.Send([]byte(msg), 0)
-                                        time.Sleep(1e9)
+                                        // time.Sleep(1e9)
                                 }
                         }
                         vent_quit <- 1
@@ -81,7 +81,7 @@ func Startmaster(data Interfacemaster) {
                         for {
                                 msgbytes, _ := receiver.Recv(0)
                                 // fmt.Println("Sync received: ",string(msgbytes))
-                                data.Analyze(msgbytes)
+                                data.AnalyzeResult(msgbytes)
                         }
                 }()
                 <- vent_quit

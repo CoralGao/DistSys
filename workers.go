@@ -58,6 +58,13 @@ func Startworkers(data Interfaceworkers) {
 		fmt.Println(result)
 
 		// Send results to sink
-		sender.Send([]byte(string(msgbytes) + " " + strconv.Itoa(result[0])) , 0)
-	}
+        sender.Send([]byte(string(msgbytes) + " " + strconv.Itoa(result[0])) , 0)	}
 }
+
+/*func int_byte(intarray []int) [][]byte{
+	bytearray := make([][]byte, len(intarray))
+	for i := 0; i < len(intarray); i++ {
+		bytearray[i] = []byte(strconv.Itoa(intarray[i]))
+	}
+	return bytearray
+}*/
