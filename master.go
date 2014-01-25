@@ -68,7 +68,7 @@ func Startmaster(data Interfacemaster) {
                                 if len(line) > 1 {
                                         line = line[0:len(line)-1]
                                         msg := line
-                                        fmt.Printf("Sending %s\n", msg)
+                                        // fmt.Printf("Sending %s\n", msg)
                                         sender.Send([]byte(msg), 0)
                                         // time.Sleep(1e9)
                                 }
@@ -80,7 +80,7 @@ func Startmaster(data Interfacemaster) {
                 go func() {
                         for {
                                 msgbytes, _ := receiver.Recv(0)
-                                // fmt.Println("Sync received: ",string(msgbytes))
+                                fmt.Println("Sync received: ",string(msgbytes))
                                 data.AnalyzeResult(msgbytes)
                         }
                 }()

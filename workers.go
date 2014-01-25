@@ -52,13 +52,14 @@ func Startworkers(data Interfaceworkers) {
 
 	for {
 		msgbytes, _ := receiver.Recv(0)
-		fmt.Printf("%s.\n", string(msgbytes))
+		// fmt.Printf("%s.\n", string(msgbytes))
 		
 		result := data.Analyze(msgbytes)
-		fmt.Println(result)
+		// fmt.Println(string(msgbytes) + " " + strconv.Itoa(result[0]))
 
 		// Send results to sink
-        sender.Send([]byte(string(msgbytes) + " " + strconv.Itoa(result[0])) , 0)	}
+        sender.Send([]byte(string(msgbytes) + " " + strconv.Itoa(result[0])) , 0)
+    }
 }
 
 /*func int_byte(intarray []int) [][]byte{
