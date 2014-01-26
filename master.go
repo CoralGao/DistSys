@@ -14,7 +14,7 @@ import (
         "flag"
         "os"
         "bufio"
-        "runtime"
+        // "runtime"
 )
 
 var Debug bool
@@ -39,10 +39,10 @@ func Startmaster(data Interfacemaster) {
 
         sender.Bind("tcp://*:5557")
 
-        fmt.Print("Press Enter when the workers are ready: ")
+        /*fmt.Print("Press Enter when the workers are ready: ")
 
         var line string
-        fmt.Scanln(&line)
+        fmt.Scanln(&line)*/
 
         fmt.Println("Sending tasks to workers...")
 
@@ -55,12 +55,14 @@ func Startmaster(data Interfacemaster) {
         defer receiver.Close()
         receiver.Bind("tcp://*:5558")
 
-        runtime.GOMAXPROCS(8)
+        // runtime.GOMAXPROCS(8)
         if *queries_file!="" {
                 f, err := os.Open(*queries_file)
                 if err != nil { panic("error opening file " + *queries_file) }
                 r := bufio.NewReader(f)
                 vent_quit := make(chan int)
+                sink_quit := make(chan int)
+                fmt.Println('E')
                 go func() {
                         for {
                                 line, err := r.ReadBytes('\n')
@@ -73,18 +75,30 @@ func Startmaster(data Interfacemaster) {
                                         // time.Sleep(1e9)
                                 }
                         }
+                        sender.Send([]byte("END"),0)
                         vent_quit <- 1
                 }()
 
 		// receving results from workers
+                msgbytes := []byte("START");
                 go func() {
-                        for {
+                        /*for count := 0; count <= 50000; count++ {
                                 msgbytes, _ := receiver.Recv(0)
                                 fmt.Println("Sync received: ",string(msgbytes))
                                 data.AnalyzeResult(msgbytes)
+                        }*/
+                        // msgbytes := []byte("START");
+                        for {
+                                msgbytes, _ = receiver.Recv(0)
+                                // fmt.Println("Sync received: ",string(msgbytes))
+                                data.AnalyzeResult(msgbytes)
+                                // fmt.Println(msgbytes[0])
+                                if msgbytes[0] == 'E' {
+                                        sink_quit <- 1
+                                }
                         }
                 }()
                 <- vent_quit
+                <- sink_quit
         }
-
 }

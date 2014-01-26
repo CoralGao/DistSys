@@ -52,8 +52,14 @@ func Startworkers(data Interfaceworkers) {
 
 	for {
 		msgbytes, _ := receiver.Recv(0)
-		// fmt.Printf("%s.\n", string(msgbytes))
-		
+		fmt.Printf("%s.\n", string(msgbytes))
+		/*if string(msgbytes) != "end" {
+			result := data.Analyze(msgbytes)
+			// Send results to sink
+	        sender.Send([]byte(string(msgbytes) + " " + strconv.Itoa(result[0])) , 0)
+		} else {
+			sender.Send(msgbytes, 0)
+		}*/
 		result := data.Analyze(msgbytes)
 		// fmt.Println(string(msgbytes) + " " + strconv.Itoa(result[0]))
 
