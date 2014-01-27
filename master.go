@@ -60,9 +60,8 @@ func Startmaster(data Interfacemaster) {
                 f, err := os.Open(*queries_file)
                 if err != nil { panic("error opening file " + *queries_file) }
                 r := bufio.NewReader(f)
-                vent_quit := make(chan int)
+                // vent_quit := make(chan int)
                 sink_quit := make(chan int)
-                fmt.Println('E')
                 go func() {
                         for {
                                 line, err := r.ReadBytes('\n')
@@ -76,29 +75,29 @@ func Startmaster(data Interfacemaster) {
                                 }
                         }
                         sender.Send([]byte("END"),0)
-                        vent_quit <- 1
+                        // vent_quit <- 1
                 }()
 
 		// receving results from workers
-                msgbytes := []byte("START");
                 go func() {
                         /*for count := 0; count <= 50000; count++ {
                                 msgbytes, _ := receiver.Recv(0)
                                 fmt.Println("Sync received: ",string(msgbytes))
                                 data.AnalyzeResult(msgbytes)
                         }*/
-                        // msgbytes := []byte("START");
+                        msgbytes := []byte("START");
                         for {
                                 msgbytes, _ = receiver.Recv(0)
                                 // fmt.Println("Sync received: ",string(msgbytes))
                                 data.AnalyzeResult(msgbytes)
-                                // fmt.Println(msgbytes[0])
-                                if msgbytes[0] == 'E' {
-                                        sink_quit <- 1
+                                if len(msgbytes) != 0 {
+                                        if msgbytes[0] == 'E' {
+                                                sink_quit <- 2
+                                        }      
                                 }
                         }
                 }()
-                <- vent_quit
+                // <- vent_quit
                 <- sink_quit
         }
 }
