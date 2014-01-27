@@ -56,6 +56,8 @@ func Startmaster(data Interfacemaster) {
         receiver.Bind("tcp://*:5558")
 
         // runtime.GOMAXPROCS(8)
+        readsnum := make(chan int)
+
         if *queries_file!="" {
                 f, err := os.Open(*queries_file)
                 if err != nil { panic("error opening file " + *queries_file) }
@@ -99,5 +101,16 @@ func Startmaster(data Interfacemaster) {
                 }()
                 // <- vent_quit
                 <- sink_quit
+        }
+
+        for {
+                msgbytes, _ = receiver.Recv(0)
+                // fmt.Println("Sync received: ",string(msgbytes))
+                data.AnalyzeResult(msgbytes)
+                if len(msgbytes) != 0 {
+                        if msgbytes[0] == 'E' {
+                                sink_quit <- 2
+                        }      
+                }
         }
 }
