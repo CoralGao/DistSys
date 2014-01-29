@@ -55,62 +55,49 @@ func Startmaster(data Interfacemaster) {
         defer receiver.Close()
         receiver.Bind("tcp://*:5558")
 
-        // runtime.GOMAXPROCS(8)
-        readsnum := make(chan int)
+        vent_quit := make(chan int)
+        // sink_quit := make(chan int)
 
         if *queries_file!="" {
                 f, err := os.Open(*queries_file)
                 if err != nil { panic("error opening file " + *queries_file) }
                 r := bufio.NewReader(f)
                 // vent_quit := make(chan int)
-                sink_quit := make(chan int)
+                // sink_quit := make(chan int)
                 go func() {
+                        count := 0
                         for {
                                 line, err := r.ReadBytes('\n')
                                 if err != nil { break }
                                 if len(line) > 1 {
                                         line = line[0:len(line)-1]
                                         msg := line
-                                        // fmt.Printf("Sending %s\n", msg)
                                         sender.Send([]byte(msg), 0)
-                                        // time.Sleep(1e9)
                                 }
+                                count++
                         }
-                        sender.Send([]byte("END"),0)
+                        vent_quit <- count
                         // vent_quit <- 1
                 }()
-
-		// receving results from workers
-                go func() {
-                        /*for count := 0; count <= 50000; count++ {
-                                msgbytes, _ := receiver.Recv(0)
-                                fmt.Println("Sync received: ",string(msgbytes))
-                                data.AnalyzeResult(msgbytes)
-                        }*/
-                        msgbytes := []byte("START");
-                        for {
-                                msgbytes, _ = receiver.Recv(0)
-                                // fmt.Println("Sync received: ",string(msgbytes))
-                                data.AnalyzeResult(msgbytes)
-                                if len(msgbytes) != 0 {
-                                        if msgbytes[0] == 'E' {
-                                                sink_quit <- 2
-                                        }      
-                                }
-                        }
-                }()
-                // <- vent_quit
-                <- sink_quit
         }
 
+        read_count := 0
+        result_count := 0
+
+        // receving results from workers
         for {
-                msgbytes, _ = receiver.Recv(0)
-                // fmt.Println("Sync received: ",string(msgbytes))
+                select {
+                        case read_count = <- vent_quit:
+                                break
+                        default:
+                                break
+                }
+                msgbytes, _ := receiver.Recv(0)
+                result_count++
+
                 data.AnalyzeResult(msgbytes)
-                if len(msgbytes) != 0 {
-                        if msgbytes[0] == 'E' {
-                                sink_quit <- 2
-                        }      
+                if result_count >= read_count && read_count > 0{
+                        break
                 }
         }
 }
