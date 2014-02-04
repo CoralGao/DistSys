@@ -6,6 +6,8 @@ import (
 	"bufio"
 	zmq "github.com/alecthomas/gozmq"
 	"strconv"
+	/*"encoding/gob"
+	"bytes"*/
 )
 
 type Interfaceworkers interface {
@@ -52,19 +54,25 @@ func Startworkers(data Interfaceworkers) {
 
 	for {
 		msgbytes, _ := receiver.Recv(0)
-		fmt.Printf("%s.\n", string(msgbytes))
-		result := data.Analyze(msgbytes)
+		// fmt.Println(msgbytes)
+		// fmt.Printf("%s.\n", string(msgbytes[:100]))
+		result := data.Analyze(msgbytes[:100])
 		// fmt.Println(string(msgbytes) + " " + strconv.Itoa(result[0]))
+		/*var fout bytes.Buffer
+		enc := gob.NewEncoder(&fout)
+		err := enc.Encode(msgbytes + result)*/
 
 		// Send results to sink
-        sender.Send([]byte(string(msgbytes) + " " + strconv.Itoa(result[0])) , 0)
+		// fmt.Println(string(append(append(msgbytes[100:], byte(' ')), int_byte(result)...)))
+		// fmt.Println(string(msgbytes) + " " + strconv.Itoa(result[0]))
+        sender.Send(append(append(msgbytes[100:], byte(' ')), int_byte(result)...) , 0)
     }
 }
 
-/*func int_byte(intarray []int) [][]byte{
-	bytearray := make([][]byte, len(intarray))
+func int_byte(intarray []int) []byte{
+	bytearray := make([]byte, 0)
 	for i := 0; i < len(intarray); i++ {
-		bytearray[i] = []byte(strconv.Itoa(intarray[i]))
+		bytearray = append(append(bytearray, []byte(strconv.Itoa(intarray[i]))...), byte(' '))
 	}
 	return bytearray
-}*/
+}

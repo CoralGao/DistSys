@@ -11,6 +11,7 @@ import (
         "fmt"
         zmq "github.com/alecthomas/gozmq"
         // "time"
+        "strconv"
         "flag"
         "os"
         "bufio"
@@ -72,7 +73,7 @@ func Startmaster(data Interfacemaster) {
                                 if len(line) > 1 {
                                         line = line[0:len(line)-1]
                                         msg := line
-                                        sender.Send([]byte(msg), 0)
+                                        sender.Send(append([]byte(msg),[]byte(strconv.Itoa(count+1))...), 0)
                                 }
                                 count++
                         }
@@ -85,7 +86,7 @@ func Startmaster(data Interfacemaster) {
         result_count := 0
 
         // receving results from workers
-        for {
+        for result_count < read_count || read_count <= 0 {
                 select {
                         case read_count = <- vent_quit:
                                 break
@@ -96,8 +97,5 @@ func Startmaster(data Interfacemaster) {
                 result_count++
 
                 data.AnalyzeResult(msgbytes)
-                if result_count >= read_count && read_count > 0{
-                        break
-                }
         }
 }
