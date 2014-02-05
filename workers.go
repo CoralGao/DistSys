@@ -6,8 +6,7 @@ import (
 	"bufio"
 	zmq "github.com/alecthomas/gozmq"
 	"strconv"
-	/*"encoding/gob"
-	"bytes"*/
+	"bytes"
 )
 
 type Interfaceworkers interface {
@@ -23,49 +22,78 @@ func Startworkers(data Interfaceworkers) {
 	c, err := os.Open("configure.txt")
 	if err != nil { 
 		fmt.Println(err)
-		panic("error opening file " + "configure.txt") }
+		panic("error opening file " + "configure.txt") 
+	}
 	cr := bufio.NewReader(c)
+	// ventilator
 	line, err := cr.ReadBytes('\n')
 	fmt.Println(string(line))
-
 	cline, _ := cr.ReadBytes('\n')
 	if err != nil { fmt.Println(err) }
-	// Socket to send messages On
 	fmt.Println(string(cline))
-
-	// Socket to receive messages on
 
 	receiver, _ := context.NewSocket(zmq.PULL)
 	defer receiver.Close()
 	receiver.Connect(string(cline))
 
+	// Sink
+	line, err = cr.ReadBytes('\n')
+	fmt.Println(string(line))
+	cline, _ = cr.ReadBytes('\n')
+	if err != nil { fmt.Println(err) }
+	fmt.Println(string(cline))	
+
+	sender, _ := context.NewSocket(zmq.PUSH)
+	defer sender.Close()
+	sender.Connect(string(cline))
+
+	// Subscribe
 	line, err = cr.ReadBytes('\n')
 	fmt.Println(string(line))
 
 	cline, _ = cr.ReadBytes('\n')
 	if err != nil { fmt.Println(err) }
-	// Socket to send messages On
-	fmt.Println(string(cline))	
+	fmt.Println(string(cline))
 
-	// Socket to send messages to task sink
-	sender, _ := context.NewSocket(zmq.PUSH)
-	defer sender.Close()
-	sender.Connect(string(cline))
+	Subscriber, _ := context.NewSocket(zmq.SUB)
+	defer Subscriber.Close()
+	Subscriber.SetSubscribe("finish")
+	Subscriber.Connect(string(cline))
 
+	work_quit := make(chan int)
+	go func() {
+		// for {
+			signal, _ := Subscriber.Recv(0)
+			fmt.Println(signal)
+		    if bytes.Equal(signal, []byte("finish")) {
+		    	fmt.Println("finish")
+		    	// fmt.Println(stop)
+		    	work_quit <- 1
+		    // }
+		}
+	}()
+
+	stop := 0
 	for {
-		msgbytes, _ := receiver.Recv(0)
-		// fmt.Println(msgbytes)
-		// fmt.Printf("%s.\n", string(msgbytes[:100]))
+		select {
+			case stop = <- work_quit:
+				fmt.Println("finish")
+				fmt.Println(stop)
+				break
+			default:
+				break
+	    }
+	    // fmt.Println(stop)
+	    if stop == 1 {
+	    	break
+	    }
+	    msgbytes, err := receiver.Recv(0)
+	    if err != nil { fmt.Println(err) }
 		result := data.Analyze(msgbytes[:100])
-		// fmt.Println(string(msgbytes) + " " + strconv.Itoa(result[0]))
-		/*var fout bytes.Buffer
-		enc := gob.NewEncoder(&fout)
-		err := enc.Encode(msgbytes + result)*/
-
-		// Send results to sink
-		// fmt.Println(string(append(append(msgbytes[100:], byte(' ')), int_byte(result)...)))
-		// fmt.Println(string(msgbytes) + " " + strconv.Itoa(result[0]))
-        sender.Send(append(append(msgbytes[100:], byte(' ')), int_byte(result)...) , 0)
+		fmt.Println(string(msgbytes[:100]))
+		fmt.Println(string(append(append(msgbytes[100:], byte(' ')), int_byte(result)...)))
+	    sender.Send(append(append(msgbytes[100:], byte(' ')), int_byte(result)...) , 0)
+	    // fmt.Println(stop)
     }
 }
 

@@ -10,12 +10,10 @@ package DistSys
 import (
         "fmt"
         zmq "github.com/alecthomas/gozmq"
-        // "time"
         "strconv"
         "flag"
         "os"
         "bufio"
-        // "runtime"
 )
 
 var Debug bool
@@ -31,40 +29,35 @@ func Startmaster(data Interfacemaster) {
         flag.BoolVar(&Debug, "debug", false, "Turn on debug mode.")
         flag.Parse()
 
-        contextv, _ := zmq.NewContext()
-        defer contextv.Close()
+        // ventilator
+        context, _ := zmq.NewContext()
+        defer context.Close()
 
         // Socket to send messages On
-        sender, _ := contextv.NewSocket(zmq.PUSH)
+        sender, _ := context.NewSocket(zmq.PUSH)
         defer sender.Close()
-
         sender.Bind("tcp://*:5557")
-
-        /*fmt.Print("Press Enter when the workers are ready: ")
-
-        var line string
-        fmt.Scanln(&line)*/
 
         fmt.Println("Sending tasks to workers...")
 
         //Sink
-        contexts, _ := zmq.NewContext()
-        defer contexts.Close()
-
         // Socket to receive messages on
-        receiver, _ := contexts.NewSocket(zmq.PULL)
+        receiver, _ := context.NewSocket(zmq.PULL)
         defer receiver.Close()
         receiver.Bind("tcp://*:5558")
 
+        // pub
+        // Socket to receive messages on
+        publisher, _ := context.NewSocket(zmq.PUB)
+        defer publisher.Close()
+        publisher.Bind("tcp://*:5556")
+
         vent_quit := make(chan int)
-        // sink_quit := make(chan int)
 
         if *queries_file!="" {
                 f, err := os.Open(*queries_file)
                 if err != nil { panic("error opening file " + *queries_file) }
                 r := bufio.NewReader(f)
-                // vent_quit := make(chan int)
-                // sink_quit := make(chan int)
                 go func() {
                         count := 0
                         for {
@@ -78,7 +71,6 @@ func Startmaster(data Interfacemaster) {
                                 count++
                         }
                         vent_quit <- count
-                        // vent_quit <- 1
                 }()
         }
 
@@ -97,5 +89,10 @@ func Startmaster(data Interfacemaster) {
                 result_count++
 
                 data.AnalyzeResult(msgbytes)
+        }
+
+        for {
+                publisher.Send([]byte("finish"), 0)
+                // fmt.Println("finish")
         }
 }
