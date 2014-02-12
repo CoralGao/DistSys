@@ -48,7 +48,7 @@ func Startworkers(data Interfaceworkers) {
 	for {
 	    msgbytes, err := receiver.Recv(0)
 	    if err != nil { fmt.Println(err) }
-	    fmt.Println(string(msgbytes))
+	    // fmt.Println(string(msgbytes))
 		msg := data.Analyze(msgbytes)
 	    sender.Send(msg, 0)
     }
